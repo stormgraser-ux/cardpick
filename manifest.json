@@ -2,7 +2,7 @@
   "name": "CardPick",
   "short_name": "CardPick",
   "description": "Which card should I use?",
-  "start_url": "/cardpick/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0f0f1a",
   "theme_color": "#0f0f1a",
