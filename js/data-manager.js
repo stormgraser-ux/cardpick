@@ -60,17 +60,25 @@ const DataManager = (() => {
 
   async function load() {
     if (_loaded) return;
+    await _fetch();
+    _loaded = true;
+  }
+
+  async function reload() {
+    await _fetch();
+  }
+
+  async function _fetch() {
     try {
       const [dataRes, txRes] = await Promise.all([
-        fetch('data/data.json').catch(() => null),
-        fetch('data/transactions.json').catch(() => null)
+        fetch('data/data.json', { cache: 'no-cache' }).catch(() => null),
+        fetch('data/transactions.json', { cache: 'no-cache' }).catch(() => null)
       ]);
       if (dataRes && dataRes.ok) _data = await dataRes.json();
       if (txRes && txRes.ok) _transactions = await txRes.json();
     } catch (e) {
       // Offline or files missing — use defaults
     }
-    _loaded = true;
   }
 
   function get(key) {
@@ -132,10 +140,42 @@ const DataManager = (() => {
     localStorage.setItem(getBoardKey(), JSON.stringify(entries));
   }
 
+  function isStale() {
+    const meta = getMeta();
+    if (!meta || !meta.generated) return true;
+    const age = (Date.now() - new Date(meta.generated).getTime()) / (1000 * 60 * 60 * 24);
+    return age > 8;
+  }
+
+  // Archive previous month's board and return fresh entries
+  function archiveBoardIfNeeded() {
+    const currentKey = getBoardKey();
+    const stored = localStorage.getItem(currentKey);
+    if (stored) return false; // Current month exists, no archive needed
+
+    // Find previous month's key to check if there's data to archive
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    const prevKey = `gf_board_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const prevData = localStorage.getItem(prevKey);
+
+    if (prevData) {
+      // Archive exists from previous month — mark it with a flag
+      const parsed = JSON.parse(prevData);
+      parsed._archived = true;
+      localStorage.setItem(prevKey, JSON.stringify(parsed));
+    }
+
+    // Initialize fresh month
+    localStorage.setItem(currentKey, JSON.stringify({ groceries: [], payments: [] }));
+    return true;
+  }
+
   return {
-    load, get, getMeta, getBalances, getRunway,
+    load, reload, get, getMeta, getBalances, getRunway,
     getTransactions, getCapSpend, setCapSpend,
     getBoardEntries, saveBoardEntries, getBoardKey,
+    isStale, archiveBoardIfNeeded,
     DEFAULTS
   };
 })();

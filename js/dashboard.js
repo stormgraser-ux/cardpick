@@ -134,6 +134,40 @@ const Dashboard = (() => {
       box.appendChild(rwCard);
     }
 
+    // Recent transactions
+    const txns = DataManager.getTransactions();
+    if (txns.length > 0) {
+      const txCard = document.createElement("div");
+      txCard.className = "dash-stat full";
+      const txLabel = document.createElement("div");
+      txLabel.className = "stat-label";
+      txLabel.textContent = "Recent Transactions \u2014 " + txns.length + " this month";
+      txCard.appendChild(txLabel);
+
+      txns.slice(-10).reverse().forEach(tx => {
+        const row = document.createElement("div");
+        row.className = "burn-row";
+        const left = document.createElement("span");
+        left.className = "burn-cat";
+        left.textContent = tx.merchant + " \u2022 " + tx.card;
+        const right = document.createElement("span");
+        right.className = "burn-amt";
+        right.style.color = '#f87171';
+        right.textContent = "-$" + (tx.amount || 0).toFixed(2);
+        row.appendChild(left);
+        row.appendChild(right);
+        txCard.appendChild(row);
+      });
+
+      if (txns.length > 10) {
+        const more = document.createElement("div");
+        more.className = "freshness";
+        more.textContent = "+" + (txns.length - 10) + " more";
+        txCard.appendChild(more);
+      }
+      box.appendChild(txCard);
+    }
+
     // Freshness indicator
     const fresh = document.createElement("div");
     fresh.className = "freshness";

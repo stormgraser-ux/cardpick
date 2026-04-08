@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'runway-shell-v1';
+const SHELL_CACHE = 'runway-shell-v2';
 const DATA_CACHE = 'runway-data-v1';
 
 const SHELL_ASSETS = [

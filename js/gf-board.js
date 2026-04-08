@@ -6,6 +6,9 @@ const GFBoard = (() => {
     const box = document.getElementById("board-content");
     box.textContent = '';
 
+    // Auto-archive previous month if we rolled over
+    const archived = DataManager.archiveBoardIfNeeded();
+
     const boardData = DataManager.get('gfBoard');
     const entries = DataManager.getBoardEntries();
     const obligations = boardData ? boardData.obligations : [];
