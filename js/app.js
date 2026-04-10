@@ -149,6 +149,12 @@ const App = (() => {
       updateBtn.addEventListener('click', () => window.location.reload());
     }
 
+    // Sign out
+    const signOutBtn = document.getElementById('sign-out-btn');
+    if (signOutBtn) {
+      signOutBtn.addEventListener('click', () => RunwayAuth.signOut());
+    }
+
     // Init features
     initPullToRefresh();
     initSWUpdate();
@@ -159,5 +165,3 @@ const App = (() => {
 
   return { init, switchTab, getActiveTab, updateStaleBadge };
 })();
-
-document.addEventListener('DOMContentLoaded', App.init);

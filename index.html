@@ -16,6 +16,27 @@
 </head>
 <body>
 
+<!-- Login Screen -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <h1 class="login-title">Runway</h1>
+    <p class="login-subtitle">Sign in to view your dashboard</p>
+    <form id="login-form">
+      <div class="login-field">
+        <input type="email" id="login-email" placeholder="Email" required autocomplete="email">
+      </div>
+      <div class="login-field">
+        <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
+      </div>
+      <div id="login-error" class="login-error"></div>
+      <button type="submit" id="login-btn" class="login-btn">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- App Shell (hidden until authenticated) -->
+<div id="app-shell" style="display:none">
+
 <!-- Pull-to-refresh indicator -->
 <div id="pull-indicator" class="pull-indicator">Pull to refresh</div>
 
@@ -113,11 +134,18 @@
     <div id="overflow-menu" class="overflow-menu">
       <button data-page="cards"><span class="icon">&#x1F4CB;</span> All Cards</button>
       <button data-page="digest"><span class="icon">&#x1F4D1;</span> Digest</button>
+      <div class="overflow-divider"></div>
+      <button id="sign-out-btn"><span class="icon">&#x1F512;</span> Sign Out</button>
     </div>
   </div>
 </div>
 
-<!-- Scripts: order matters (data-manager first, then modules, then app) -->
+</div><!-- /app-shell -->
+
+<!-- Scripts: config first (plain), then modules, then IIFEs, then boot -->
+<script src="js/config.js"></script>
+<script type="module" src="js/db.js"></script>
+<script type="module" src="js/auth.js"></script>
 <script src="js/data-manager.js"></script>
 <script src="js/pick.js"></script>
 <script src="js/cards.js"></script>
@@ -127,5 +155,9 @@
 <script src="js/gf-board.js"></script>
 <script src="js/digest.js"></script>
 <script src="js/app.js"></script>
+<script type="module">
+  await RunwayAuth.init();
+  App.init();
+</script>
 </body>
 </html>

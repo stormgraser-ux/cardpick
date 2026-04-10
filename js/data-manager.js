@@ -4,56 +4,30 @@ const DataManager = (() => {
   let _transactions = null;
   let _loaded = false;
 
-  // Hardcoded defaults (used when data.json unavailable)
+  // Sanitized defaults (used when Supabase unavailable — no real financial data)
   const DEFAULTS = {
     balances: {
-      checking: { amount: 1472, asOf: "2026-04-06", label: "KeyBank Checking" },
-      savings: { amount: 5154, asOf: "2026-04-06", label: "KeyBank Savings" },
-      brokerage: { amount: 15000, asOf: "2026-04-06", label: "Tastytrade" },
-      pending: [{ label: "Kendall Toyota check", amount: 11800, status: "clearing" }]
+      checking: { amount: 0, asOf: "", label: "Checking" },
+      savings: { amount: 0, asOf: "", label: "Savings" },
+      brokerage: { amount: 0, asOf: "", label: "Brokerage" },
+      pending: []
     },
     monthlyBurn: {
-      stormTotal: 1442,
-      breakdown: {
-        "Housing": 866, "Groceries": 300, "Claude.AI": 130,
-        "EWEB": 69, "Internet": 25, "Chewy": 20,
-        "Subscriptions": 20, "Cloudflare": 1
-      }
+      stormTotal: 0,
+      breakdown: {}
     },
-    rewards: {
-      unredeemed: [
-        { card: "BofA Unlimited", amount: 239.10 },
-        { card: "WF Active Cash", amount: 63.15 },
-        { card: "Amex BCE", amount: 6.83 },
-        { card: "Chase Amazon", points: 5242 },
-        { card: "Citi Custom Cash", points: 2782 }
-      ]
-    },
-    bills: [
-      { name: "Conservice (Rent + Utils)", total: 1851, stormShare: 866, angelyShare: 986, dueDay: 1, paidVia: "BILT", autopay: true, category: "housing" },
-      { name: "EWEB", total: 138, stormShare: 69, angelyShare: 69, dueDay: 15, paidVia: "Citi Double Cash", autopay: false, category: "utilities" },
-      { name: "Quantum Fiber", total: 50, stormShare: 25, angelyShare: 25, dueDay: 20, paidVia: "KeyBank autopay", autopay: true, category: "utilities" },
-      { name: "Claude.AI", total: 130, stormShare: 130, angelyShare: 0, dueDay: null, paidVia: "Amex BCE", autopay: true, category: "software" },
-      { name: "Chewy (Mojo)", total: 66, stormShare: 20, angelyShare: 46, dueDay: null, paidVia: "Amex BCE", autopay: true, category: "pet" },
-      { name: "Cloudflare", total: 1, stormShare: 1, angelyShare: 0, dueDay: null, paidVia: "Amex BCE", autopay: true, category: "software" }
-    ],
+    rewards: { unredeemed: [] },
+    bills: [],
     gfBoard: {
-      month: "2026-04",
-      obligations: [
-        { item: "Rent (half)", amount: 838 },
-        { item: "Garage", amount: 120 },
-        { item: "Utilities (half)", amount: 28 },
-        { item: "Internet (half)", amount: 25 },
-        { item: "EWEB (half)", amount: 67 },
-        { item: "Cat food (2wk)", amount: 30 }
-      ],
-      totalFixed: 1108
+      month: "",
+      obligations: [],
+      totalFixed: 0
     },
     caps: {
-      bofa_cr_quarterly: { spent: 790, limit: 2500, resetNote: "Resets Jan 1, Apr 1, Jul 1, Oct 1" },
-      custom_cash_monthly: { spent: 0, limit: 500, resetNote: "Resets each billing cycle" },
-      discover_quarterly: { spent: 0, limit: 1500, resetNote: "Resets each quarter. ACTIVATE at discover.com!" },
-      amex_bce_yearly: { spent: 800, limit: 6000, resetNote: "Resets annually" }
+      bofa_cr_quarterly: { spent: 0, limit: 0, resetNote: "" },
+      custom_cash_monthly: { spent: 0, limit: 0, resetNote: "" },
+      discover_quarterly: { spent: 0, limit: 0, resetNote: "" },
+      amex_bce_yearly: { spent: 0, limit: 0, resetNote: "" }
     },
     digest: null
   };
@@ -70,14 +44,14 @@ const DataManager = (() => {
 
   async function _fetch() {
     try {
-      const [dataRes, txRes] = await Promise.all([
-        fetch('data/data.json', { cache: 'no-cache' }).catch(() => null),
-        fetch('data/transactions.json', { cache: 'no-cache' }).catch(() => null)
+      const [snapshot, txRows] = await Promise.all([
+        window.RunwayDB.getLatestSnapshot().catch(() => null),
+        window.RunwayDB.getTransactions().catch(() => null)
       ]);
-      if (dataRes && dataRes.ok) _data = await dataRes.json();
-      if (txRes && txRes.ok) _transactions = await txRes.json();
+      if (snapshot) _data = snapshot;
+      if (txRows) _transactions = { transactions: txRows };
     } catch (e) {
-      // Offline or files missing — use defaults
+      // Auth failed or offline — use defaults
     }
   }
 

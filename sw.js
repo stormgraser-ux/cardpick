@@ -1,9 +1,11 @@
-const SHELL_CACHE = 'runway-shell-v3';
-const DATA_CACHE = 'runway-data-v1';
+const SHELL_CACHE = 'runway-shell-v4';
 
 const SHELL_ASSETS = [
   './',
   'css/main.css',
+  'js/config.js',
+  'js/db.js',
+  'js/auth.js',
   'js/data-manager.js',
   'js/pick.js',
   'js/cards.js',
@@ -16,8 +18,6 @@ const SHELL_ASSETS = [
   'manifest.json'
 ];
 
-const DATA_PATHS = ['data/data.json', 'data/transactions.json'];
-
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(SHELL_CACHE).then(c => c.addAll(SHELL_ASSETS)));
   self.skipWaiting();
@@ -27,7 +27,7 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys
-        .filter(k => k !== SHELL_CACHE && k !== DATA_CACHE)
+        .filter(k => k !== SHELL_CACHE)
         .map(k => caches.delete(k))
       )
     )
@@ -37,23 +37,29 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  const isData = DATA_PATHS.some(p => url.pathname.endsWith(p));
 
-  if (isData) {
-    // Network-first for data files — always try fresh, fall back to cache
+  // Supabase API — always network, never cache
+  if (url.hostname.includes('supabase.co')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
+  // Supabase JS CDN — cache for offline shell
+  if (url.hostname === 'cdn.jsdelivr.net' && url.pathname.includes('supabase')) {
     e.respondWith(
-      fetch(e.request)
-        .then(res => {
+      caches.match(e.request).then(r => r ||
+        fetch(e.request).then(res => {
           const clone = res.clone();
-          caches.open(DATA_CACHE).then(c => c.put(e.request, clone));
+          caches.open(SHELL_CACHE).then(c => c.put(e.request, clone));
           return res;
         })
-        .catch(() => caches.match(e.request))
+      )
     );
-  } else {
-    // Cache-first for app shell
-    e.respondWith(
-      caches.match(e.request).then(r => r || fetch(e.request))
-    );
+    return;
   }
+
+  // Cache-first for app shell
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request))
+  );
 });
